@@ -1,13 +1,11 @@
 # load libraries
 library(shiny)
-library(shinydashboard)
 library(shinyBS)
 library(glmnet)
 library(gren)
 library(ecpc)
 library(openxlsx)
 library(survival)
-library(shinyWidgets)
 library(pROC)
 
 # UI function
@@ -21,6 +19,7 @@ ui <- navbarPage(
     "data",
     sidebarLayout(
       sidebarPanel(
+        tags$a(href="https://github.com/magnusmunch/codata-app", "Click here!"),
         img(src="data.png", width="100%"),
         titlePanel("upload data"),
         "Note: Decimal separator is '.' (decimal point), ",

@@ -1,0 +1,483 @@
+% set options
+<<settings, include=FALSE, echo=FALSE>>=
+opts_knit$set(root.dir="..", base.dir="../figs")
+opts_chunk$set(fig.align='center', fig.path="../figs/", 
+               echo=FALSE, cache=FALSE, message=FALSE, fig.pos='!ht')
+knit_hooks$set(document=function(x) {
+  sub('\\usepackage[]{color}', '\\usepackage{xcolor}', x, fixed=TRUE)})
+options(knitr.kable.NA="")
+@
+
+\documentclass[a4paper,hidelinks]{article}
+\usepackage{natbib,hyperref,pgfplotstable,arydshln,caption,enumerate,parskip,
+amsmath,amsfonts,bm}
+
+% settings
+\pgfplotsset{compat=1.16}
+\graphicspath{{../figs/}}
+\setlength{\evensidemargin}{.5cm} \setlength{\oddsidemargin}{.5cm}
+\setlength{\textwidth}{15cm}
+\title{Vignette: Co-data shiny app}
+\date{\today}
+\author{Magnus M. M\"unch$^{1}$\footnote{Correspondence to: 
+\href{mailto:m.munch@amsterdamumc.nl}{m.munch@amsterdamumc.nl}}, Mirrelijn van
+Nee$^{1}$, and Mark A. van de Wiel$^{1,2}$}
+
+\begin{document}
+
+	\maketitle
+	
+	\noindent
+	1. Department of Epidemiology \& Biostatistics, Amsterdam UMC, VU University, 
+	PO Box 7057, 1007 MB Amsterdam, The Netherlands \\
+	2. MRC Biostatistics Unit, Cambridge Institute of Public Health, Cambridge,
+	United Kingdom
+	
+	\begin{abstract}
+		{Abstract here...}
+	\end{abstract}
+	
+	\noindent\textbf{Keywords}: Co-data; Shiny; Prediction
+	
+	\noindent\textbf{Software available from}: 
+	\url{https://magnusmunch.shinyapps.io/codata-app/}
+	
+	\section{Introduction}\label{sec:introduction}
+	In high dimensional prediction problems, complementary data (co-data) on the
+	features is often available. Examples of such problems are:
+	\begin{enumerate}[(i)]
+	  \item cancer status classification with gene methylation, \label{it:meth}
+	  \item survival time prediction through microRNAs, \label{it:mrna}
+	  \item therapy efficacy prediction using gene expressions. \label{it:expr}
+	\end{enumerate}
+	These examples consist of different types of outcomes: binary in
+	(\ref{it:meth}),
+	time-to-event in (\ref{it:mrna}), and continuous in (\ref{it:expr}). We argue
+	that these are the most commonly encountered outcomes in biomedical research, 
+	so focus in the current paper is on modelling these.
+	
+	Many types of co-data exist. In example (\ref{it:meth}), possible co-data 
+	are the gene's distance from the closest CpG island. CpG islands are areas of
+	the DNA with more methylation. It is sometimes hypothesised that these
+	islands play an important role in cancer. The CpG island locations 
+	may therefore be hulpful in the detection of genes involved in cancer.
+	In example (\ref{it:mrna}), a possible source of co-data are the
+	conservation status accross other animals of microRNAs. It is sometimes
+	hypothesised that microRNAs that are found in many other animals play an 
+	important role in the body and are therefore predictive of general 
+	functioning and consequently, surivival.
+	Possible co-data in example (\ref{it:expr}) are previously published
+	$p$-values on the involved genes. Lower $p$-values could be indicative of
+	predictive genes. The first two examples of co-data are categorical: they
+	allow to partition the features into groups. The $p$-values are continuous
+	co-data. These require a bit more modelling, as will become clear in the 
+	following.
+	
+	The methods described in the current paper are available as
+	R packages. This allows anyone with access to and knowledge of R to use them
+	separately. However, many end-users of the implemented methods, such as
+	medical practitioners and clinical researchers are not R users. This 
+	severely limits the impact of the proposed co-data approaches. We argue that
+	a convenient and easy-to-use R shiny app greatly increases the possible
+	societal impact of the methods. In addition, one app that contains several
+	different co-data methods allows for an easier and fairer comparision between 
+	these methods.
+	
+	The rest of the paper is structured as follows:..
+	
+	\section{Methods}
+	\section{Observational models}
+	In this app, the (i) linear, (ii) logistic, and (iii) Cox regression models 
+	are implemented. In the linear model, the outcome $y$ relates to the 
+	$p$-dimensional feature vector:
+	$\mathbf{x}$ through:
+	$$
+	y \sim \mathcal{N}(\mathbf{x}^{\text{T}} \bm{\beta}, \sigma^2),
+	$$
+	where $\bm{\beta}$ is the regression parameter of interest, and $\sigma^2$
+	is the error variance. The logistic model assumes the following relation 
+	between outcome and feature:
+	$$
+	y \sim \mathcal{B}(m, \text{expit}(\mathbf{x}^{\text{T}} \bm{\beta})),
+	$$
+	with $\mathcal{B}(m, \pi)$ the binomial distribution with number of trials 
+	$m$ and success probability $\pi$, and $\text{expit}(x)$ the logistic
+	function. The Cox proportional hazard model considers the hazard function
+	$$
+	\lambda(t | \mathbf{x}) = \lambda_0(t) \exp(\mathbf{x}^{\text{T}} \bm{\beta}),
+	$$
+	with $\lambda_0(t)$ an unspecified baseline hazard function.
+	The implemented methods are designed to handle high dimensional data. 
+	High dimensional estimators suffer from high (or even infinite) variance.
+	To counteract this, the implemented methods introduce bias through 
+	the addition of a penalty to the likelihood. The next to Sections introduce
+	the two implemented types of penalization and corresponding estimation 
+	methods.
+	
+	
+	
+	\section{\texttt{ecpc}}
+	
+	\section{\texttt{gren}}
+	The implemented method \texttt{gren} considers the elastic net penalty:
+	$$
+	\lambda \sum_{j=1}^p \left[ \alpha |\beta_j| + (1 - \alpha) \beta_j^2 
+	\right],
+	$$
+	where the $\alpha$ is assumed fixed and specified by the user.
+	The estimates under this penalty term correspond to 
+	the posterior mode of the
+	estimator under the prior
+	\begin{align*}
+	\bm{\beta} | \bm{\tau} & \sim \prod_{j=1}^p 
+	  \mathcal{N}(0, (\tau_j - 1)/(\lambda (1 - \alpha))), \\
+	\bm{\tau} & \sim \mathcal{TG} (1/2, 8 (1- \alpha)/(\lambda \alpha^2), 
+	  (1, \infty)),
+	\end{align*}
+	with $\mathcal{TG}(k, \theta, (x_l, x_u))$ the truncated Gamma distribution
+	with shape $k$, scale $\theta$, and domain $(x_l, x_u)$.
+	
+	
+	
+	\section{Implementation}\label{sec:implementation}
+	The app is implemented using \texttt{R} shiny \cite[]{chang_shiny_2020}.
+	\texttt{R} shiny is an \texttt{R} package that facilitates interactive web
+	app creation. It allows the user to directly translate 
+	\texttt{R} code to an interactive app. The app is divided into three
+	tabs (see Figure \ref{fig:tabs}): (i) the data tab, (ii) the settings tab, 
+	and (iii) the output tab.
+	The data tab allows the user to upload his/her data and specify some 
+	characteristics. The settings tab allows the user to pick the methods to use,
+	as well as the desired settings for each method. Here, the user may decide to
+	cross-validate the performance of the methods. The output tab shows the 
+	output of the fitted models. Here, the user may choose to save the fitted 
+	models, and created figures and/or tables. 
+	The general flow of the app is:
+	\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{../figs/flow.pdf}
+	\end{figure} \\
+	The next three sections cover
+	the three tabs in more detail.
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.4\linewidth]{../figs/tabs.png}
+    \caption{}
+    \label{fig:tabs}
+	\end{figure}
+	
+	\subsection{Data}
+	The data tab allows the user to upload the data used in fitting the models.
+	Three uploading fields are available (see Figure \ref{fig:upload}): 
+	(i) response (+ unpenalized), (ii)
+	features, and (iii) co-data. All three fields allow for 
+	tab-delimited or excel files, with extensions .txt and .xlsx, respectively. 
+	For all three files, the first row of the table contains the column names
+	and if the first column is unnamed, it provides the row names.
+	The next three subsections cover the
+	three
+	uploading fields in more detail.
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{../figs/upload.png}
+    \caption{}
+    \label{fig:upload}
+	\end{figure}
+	
+	\subsubsection{Response (+ unpenalized)}
+	This field allows the user to upload a file with both the response and 
+	possibly a set of low-dimensional unpenalized covariates. 
+	The file contains a table with samples in the rows and variables in the 
+	columns. 
+	The response is one continuous variable in linear regression, one binary 
+	integer/string variable in logistic regression, and a set of one positive 
+	continuous time-to-event variable and one binary censoring status in Cox 
+	regression. The remaining columns in the table are considered to be 
+	unpenalized covariates. Unpenalized covariates are
+	assumed to be continuous. If categorical covariates are included, the user
+	should supply them as dummy variables her/himself.
+	The response variable(s) is/are found by matching the variable names in the 
+	file to either \texttt{response} in linear/logistic regression or 
+	\texttt{time} and \texttt{status} for cox regression. If no such names are 
+	found, the first variable is taken as response (logistic or linear, depending 
+	on the form). If both variables named 
+	\texttt{response}, and \texttt{time} and \texttt{status} are found, the first 
+	fount (from left to right) is used as response. 
+	
+	In logistic regression, with a an integer response variable, \texttt{1} 
+	indicates the event of interest and \texttt{0} its complement. In logistic
+	regression with a string variable, the value of the sample in the top row
+	of the file is taken to be the event of interest and the remaining value
+	as its complement. In Cox regression, a \texttt{0} censoring status indicates 
+	censored events, while \texttt{0} indicates observed events. Table 
+	\ref{tab:responsedata} provides a general schematic of the input data table.
+	\begin{table}[!ht]
+    \centering
+    \begin{tabular}{| c | c | c c c |} 
+      \cline{2-5}
+      \multicolumn{1}{c|}{} & 
+        \begin{tabular}{c | c} 
+          time & status \\ 
+          \hdashline[0.4pt/4pt]
+          \multicolumn{2}{c}{response} 
+        \end{tabular} & 
+        covariate{\textunderscore}id1 & covariate{\textunderscore}id2 & 
+          $\cdots$ \\ [0.5ex] 
+      \hline
+      sample{\textunderscore}id1 & & & & \\ 
+      sample{\textunderscore}id2 & & & & \\
+      $\vdots$ & & & & \\ [1ex] 
+      \hline
+    \end{tabular}
+    \caption{}
+    \label{tab:responsedata}
+  \end{table}
+  
+  After a response file upload, two displays appear. One contains a menu to pick
+  the desired response type (see Figure \ref{fig:responsetype}). 
+  The other
+  contains a check sample of the uploaded file 
+  (see Figure \ref{fig:responsecheck}).
+  \begin{figure}[!ht]
+    \centering
+    \begin{minipage}[b]{0.4\textwidth}
+      \centering
+      \includegraphics[width=0.6\linewidth]{../figs/responsetype.png}
+      \caption{}
+      \label{fig:responsetype}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.4\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{../figs/responsecheck.png}
+      \caption{}
+      \label{fig:responsecheck}
+    \end{minipage}
+  \end{figure}
+	
+	\subsubsection{Features}
+	The features field allows the user to upload a file containing a table
+	with the features in it. The table contains the samples in the columns and 
+	the features in the rows. It matches the 
+	samples in the feature data with the response (+ unpenalized) data
+	based on the column and row ordering, respectively. Feature data is assumed 
+	to be continuous. If a feature
+	is supposed to be interpreted as categorical, the user should supply the 
+	dummy variable her/himself.
+	Table \ref{tab:featuredata} provides a general schematic of the input data 
+	table.
+	\begin{table}[!ht]
+	  \centering
+    \begin{tabular}{| c | c c c |} 
+      \cline{2-4}
+      \multicolumn{1}{c|}{} & sample{\textunderscore}id1 & 
+        sample{\textunderscore}id2 & $\cdots$ \\ [0.5ex] 
+      \hline
+      feature{\textunderscore}id1 & & & \\ 
+      feature{\textunderscore}id2 & & & \\
+      $\vdots$ & & & \\ [1ex] 
+      \hline
+    \end{tabular}
+    \caption{}
+    \label{tab:featuredata}
+  \end{table}
+  
+  After uploading a features file, a sample check appears (see Figure 
+  \ref{fig:featurescheck})
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{../figs/featurescheck.png}
+    \caption{}
+    \label{fig:featurescheck}
+	\end{figure}
+	
+	\subsubsection{Codata}
+	In the codata field, a file containing a data table with features in the rows 
+	and codata in the columns is uploaded.
+	Matching with features in the feature data is on the basis of order. 
+	Overlapping groups in codata (in \texttt{ecpc}) are depicted with a
+	semicolon. For example, a feature with 1;2 in a codata cell is both in group 
+	1 and 2. Table \ref{tab:codata} provides a general schematic of the input 
+	data table.
+	\begin{table}[!ht]
+    \centering
+    \begin{tabular}{| c | c c c |} 
+      \cline{2-4}
+      \multicolumn{1}{c|}{} & codata{\textunderscore}1 & 
+        codata{\textunderscore}2 & $\cdots$ \\ [0.5ex] 
+      \hline
+      feature{\textunderscore}id1 & & & \\ 
+      feature{\textunderscore}id2 & & & \\
+      $\vdots$ & & & \\ [1ex] 
+      \hline
+    \end{tabular}
+    \caption{}
+    \label{tab:codata}
+  \end{table}
+  
+  Once a codata file is uploaded, several fields appear: 
+  One for each codata variable, with a menu to pick
+  the desired codata type (see Figure \ref{fig:codatatype}). 
+  The other
+  contains a check sample of the uploaded file 
+  (see Figure \ref{fig:codatacheck}).
+  If a codata type is set to continuous an additional menu appears (see
+  Figure \ref{fig:split}), which allows to user to select one of two types of
+  splitting: the default (i) both, where both lower and higher values of the 
+  co-data are
+  deemed important, and (ii) lower, where only the lower co-data values are
+  deemed important. Situation (ii) occurs, for example, if the co-data consists
+  of $p$-values.
+  \begin{figure}[!ht]
+    \centering
+    \begin{minipage}[b]{0.3\textwidth}
+      \centering
+      \includegraphics[width=0.6\linewidth]{../figs/codatatype.png}
+      \caption{}
+      \label{fig:codatatype}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.3\textwidth}
+      \centering
+      \includegraphics[width=0.4\linewidth]{../figs/split.png}
+      \caption{}
+      \label{fig:split}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.3\textwidth}
+      \centering
+      \includegraphics[width=0.8\linewidth]{../figs/codatacheck.png}
+      \caption{}
+      \label{fig:codatacheck}
+    \end{minipage}
+  \end{figure}
+  
+  \subsection{Settings}
+  The settings tab in the app allows the user to specify the desired settings
+  for fitting and cross validation the models. It consists of two parts: 
+  (i) the general settings (see Figure \ref{fig:generalsettings}), and (ii) the
+  specific settings (see Figure \ref{fig:specificsettings}).
+  \ref{fig:specificsettings})
+  \ref{fig:featurescheck})
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{../figs/generalsettings.png}
+    \caption{}
+    \label{fig:generalsettings}
+	\end{figure}
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.6\linewidth]{../figs/specificsettings.png}
+    \caption{}
+    \label{fig:specificsettings}
+	\end{figure}
+	
+	The general settings parts allows the user to select the methods to be fitted
+	(regular elastic net via \texttt{glmnet}, \texttt{gren}, and \texttt{ecpc}).
+	Note that if the selected response type in the data tab is other than
+	binomial,
+	\texttt{gren} is not available. The general settings also allow the user
+	to set the number of folds used in cross-validation of the performance and
+	to select the cross-validated performance measures to calculate. The possible
+	performance methods are 
+	\begin{itemize}
+	  \item deviance, i.e., the log likelihood difference between the
+	    saturated model and the fitted model,
+	  \item mse, i.e., mean squared error of prediction,
+	  \item class, i.e., missclassification error,
+	  \item auc, i.e., the area under the receiver-operator curve
+	  \item mae, i.e., the mean absolute error of prediction.
+	  \item C, i.e., Harrel's concordance measure.
+	\end{itemize}
+	Note that deviance is based on the partial likelihood in Cox regression. 
+	Class and auc are available only for binomial regression, while mse and mae 
+	are not available for Cox regression. Harrol's concordance measure is 
+	available for Cox regression only.
+	
+	The specific settings part allows the user to tune the fitted models.
+	A few basic settings are shown by default, while the advanced settings are
+	hidden and become available after a user selects the advance on button. The
+	advanced settings are not detailed here. We refer the reader to the 
+	\texttt{glmnet}, \texttt{gren}, and \texttt{ecpc} user manuals for more
+	details on the advanced settings. The basic settings for enet are: 
+	\begin{itemize}
+	  \item alpha allows the user to balance between $L_1$- (alpha=1)
+	    and $L_2$-norm (alpha=0) penalization,
+	  \item standardize, to standardize the features before fitting the model,
+	  \item intercept, to include an intercept in the model.
+	\end{itemize}
+	The basic settings for \texttt{gren} are:
+	\begin{itemize}
+	  \item alpha allows the user to balance between $L_1$- (alpha=1)
+	    and $L_2$-norm (alpha=0) penalization,
+	  \item intercept, to include an intercept in the model.
+	\end{itemize}
+	\texttt{ecpc} allows the basic settings:
+	\begin{itemize}
+	  \item intercpt, to include an intercept in the model,
+	  \item maxsel tunes the maximum number of selected features.
+	\end{itemize}
+	
+  \subsection{Output}
+  The output tab consists of two parts: the (i) control part (see Figure 
+  \ref{fig:controls}), and (ii) the 
+  output part. The control part consists of two buttons: fit and CV. The fit
+  button fits the models, while the CV button cross-validates them. Once 
+  fit or CV has been pressed, a progress bar appears and the models are fitted
+  or cross validated. Note that this may take a few minutes, depending on
+  the data and the number of folds used.
+  Once the
+  models have been fitted, an extra button appears: save models, to save the
+  fitted models in an .Rdata file.
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.4\linewidth]{../figs/controls.png}
+    \caption{}
+    \label{fig:controls}
+	\end{figure}
+	
+	The output part is can vary with data types, settings, and fitted models.
+	Each output comes with a save button, which allows the user to save the
+	output on their device.
+  If the models are fitted, a figure and a table appear. The figure 
+  (see Figure \ref{fig:codatafig}) shows the estimated penalty weights versus 
+  the codata (barplot and scatterplot for categorical and continuous codata,
+  respectively). The table (see Table \ref{fig:varsel}) displays the selected
+  features by each of the methods.
+  \begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.4\linewidth]{../figs/codatafig.png}
+    \caption{}
+    \label{fig:codatafig}
+	\end{figure}
+	\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.4\linewidth]{../figs/varsel.png}
+    \caption{}
+    \label{fig:varsel}
+	\end{figure}
+  
+  \section{Demonstration}
+	
+	\section{Discussion}\label{sec:discussion}
+	
+	\section*{Supplementary Material}
+	Supplementary Material is available online from ... 
+	
+	\section*{Reproducible Research}
+	All results and documents may be recreated from ...
+	
+	\section*{Acknowledgements}
+	% Advanced settings switch button by \cite{sebastien_nice_2016}
+	\textit{Conflict of Interest}: None declared.
+	
+	\bibliographystyle{author_short3} 
+	\bibliography{refs}
+	
+	\section*{Session info}
+
+<<r session-info, eval=TRUE, echo=TRUE, tidy=TRUE>>=
+devtools::session_info()
+@
+
+\end{document}

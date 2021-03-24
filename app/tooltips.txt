@@ -1,0 +1,28 @@
+// responsefile
+Upload your respones and unpenalized data file here
+
+// featuresfile
+Upload your feature data file here
+
+// codatafile
+Upload your codata file here
+
+// methods
+Choose one or more methods to fit here
+
+// responsetype
+Choose the type of response here
+
+// advanced
+Are advanced settings required?
+
+// codatatypes
+Specify the type of co-data here. If the co-data are continuous, additionally
+specify whether the lower values are expected to be important or whether both
+lower and higher values are expected to be important
+
+// nfolds
+The number of folds to use in cross validation of performance measures
+
+// cvmeasures
+The performance measures to compare the methods
